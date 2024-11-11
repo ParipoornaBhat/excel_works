@@ -213,7 +213,7 @@ p {
           link.download = 'scraped_tables.xlsx';
           link.click();
         } else {
-          alert('Failed to scrape tables. Please try again.');
+          alert('Failed to scrape tables. Please try again.',response);
         }
       } catch (error) {
         console.error('Error scraping:', error);
