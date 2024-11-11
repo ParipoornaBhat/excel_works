@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Scraper</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    .form-container { max-width: 500px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    label { display: block; margin-bottom: 10px; }
+    input, button { width: 100%; padding: 10px; margin-bottom: 10px; }
+    button { background-color: #4CAF50; color: white; border: none; }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <h1>Web Scraper</h1>
+    <form id="scrapeForm">
+      <label for="url">URL</label>
+      <input type="url" id="url" name="url" placeholder="Enter the URL" required />
+
+      <label for="initialiseBtn">Initialise Button Selector (Optional)</label>
+      <input type="text" id="initialiseBtn" name="initialiseBtn" placeholder="Enter the selector for the Initialise button" />
+
+      <label for="nextBtn">Next Page Button Selector (Optional)</label>
+      <input type="text" id="nextBtn" name="nextBtn" placeholder="Enter the selector for the Next button" />
+
+      <button type="submit">Start Scraping</button>
+    </form>
+    <div id="errorMessage" style="color: red; display: none;"></div>
+  </div>
+
+  <script>
+    document.getElementById('scrapeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const url = document.getElementById('url').value;
+      const initialiseBtn = document.getElementById('initialiseBtn').value;
+      const nextBtn = document.getElementById('nextBtn').value;
+
+      const response = await fetch('/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, initialiseBtnSelector: initialiseBtn, nextBtnSelector: nextBtn }),
+      });
+
+      if (response.ok) {
+        window.location.href = '/scraped-data.xlsx';
+      } else {
+        const errorText = await response.text();
+        document.getElementById('errorMessage').innerText = errorText;
+        document.getElementById('errorMessage').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
