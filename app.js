@@ -8,6 +8,8 @@ const app = express();
 const { Builder, By, until } = require('selenium-webdriver');
 const chrome = require('selenium-webdriver/chrome');
 const puppeteer = require('puppeteer');
+const cors = require('cors');
+app.use(cors()); // This will allow all origins
 
 
 // Middleware to parse JSON and URL-encoded data
@@ -296,7 +298,6 @@ app.post('/scrape', async (req, res) => {
           });
         }
       });
-  
       // Close the browser session
       await browser.close();
     } catch (error) {
