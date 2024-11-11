@@ -1,148 +1,311 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
+const axios = require('axios');
+const { JSDOM } = require('jsdom');
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-const port = 3000;
+const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
+const puppeteer = require('puppeteer');
 
+
+// Middleware to parse JSON and URL-encoded data
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.urlencoded({ extended: true }));
 
-// Serve the front-end form
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// Serve static files from the current directory (like index.html)
+app.use(express.static(path.join(__dirname)));
 
-// Scrape the page and generate a new Excel file for each post
+// Function to scrape tables from the URL
+async function scrapeTables(url) {
+  try {
+    const { data } = await axios.get(url); // Fetch the webpage
+
+    const dom = new JSDOM(data); // Create a virtual DOM
+    const tables = dom.window.document.querySelectorAll('table'); // Get all tables
+
+    let tablesData = [];
+
+    tables.forEach(table => {
+      const rows = table.querySelectorAll('tr');
+      const tableRows = [];
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('th, td');
+        const rowData = [];
+        cells.forEach(cell => rowData.push(cell.textContent.trim()));
+        if (rowData.length > 0) tableRows.push(rowData);
+      });
+
+      if (tableRows.length > 0) {
+        tablesData.push(tableRows);
+      }
+    });
+
+    return tablesData;
+  } catch (error) {
+    console.error('Error scraping the URL:', error);
+    throw new Error('Failed to scrape URL');
+  }
+}
+
+// Route to generate the Excel file from the scraped data
 app.post('/scrape', async (req, res) => {
-  const { url, initialiseBtnSelector, nextBtnSelector } = req.body;
-  let browser, page;
+  const { url } = req.body;
+
+  if (!url) {
+    return res.status(400).send('URL is required');
+  }
 
   try {
-    // Launch the browser and create a page
-    browser = await puppeteer.launch({ headless: true });
-    page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-    // Start the process of scraping and creating Excel files for each page
-    let pageNumber = 1;
-    let filePath = path.join(__dirname, `scraped-post-${pageNumber}.xlsx`); // File path for the first page
-
-    // Create a new Excel workbook for the first page
+    const tablesData = await scrapeTables(url);
     const workbook = new ExcelJS.Workbook();
-    let sheet = workbook.addWorksheet(`Page ${pageNumber}`);
+    const worksheet = workbook.addWorksheet('Scraped Tables');
 
-    // If an initialise button selector is provided, attempt to click it
-    if (initialiseBtnSelector) {
-      console.log('Looking for initialise button...');
-      const initialiseBtn = await page.$(initialiseBtnSelector);
-      if (initialiseBtn) {
-        await initialiseBtn.click();
-        await page.waitForSelector(nextBtnSelector || 'body'); // Wait for next page or fallback to body
-      } else {
-        console.log('Initialise button not found.');
-        // Optionally take a screenshot and log it
-        await page.screenshot({ path: 'initialise-error.png' });
-      }
-    } else {
-      console.log('Initialise button selector not provided, skipping.');
-    }
+    let rowIndex = 1;
 
-    // Scrape data from the current page (assuming a table structure)
-    const data = await page.evaluate(() => {
-      const rows = [];
-      document.querySelectorAll('table tr').forEach(row => {
-        const cols = row.querySelectorAll('td');
-        const rowData = Array.from(cols).map(col => col.innerText.trim());
-        rows.push(rowData);
+    // Add tables to the Excel sheet
+    tablesData.forEach(tableData => {
+      tableData.forEach(rowData => {
+        worksheet.addRow(rowData);
       });
-      return rows;
+      rowIndex += tableData.length + 1;
+      worksheet.addRow([]); // Add an empty row between tables
     });
 
-    // Add the scraped data to the Excel sheet
-    data.forEach(row => {
-      sheet.addRow(row);
-    });
 
-    // Save the Excel file for the current page
+
+
+
+
+    // Generate a unique filename based on the current timestamp
+    const timestamp = Date.now();
+    const filename = `tables_${timestamp}.xlsx`;
+
+    const filePath = path.join(__dirname, 'downloads', filename);
     await workbook.xlsx.writeFile(filePath);
-    console.log(`File for page ${pageNumber} saved at ${filePath}`);
 
-    // Loop through next pages and scrape, creating a new Excel file for each post
-    let nextPageExists = true;
-    while (nextPageExists && nextBtnSelector) {
-      const nextBtn = await page.$(nextBtnSelector);
-      if (nextBtn) {
-        await nextBtn.click();
-        await page.waitForTimeout(2000); // Wait for the page to load
-        pageNumber++;
-
-        // Create a new workbook and worksheet for the next page
-        const newWorkbook = new ExcelJS.Workbook();
-        const newSheet = newWorkbook.addWorksheet(`Page ${pageNumber}`);
-
-        // Scrape new page data
-        const nextPageData = await page.evaluate(() => {
-          const rows = [];
-          document.querySelectorAll('table tr').forEach(row => {
-            const cols = row.querySelectorAll('td');
-            const rowData = Array.from(cols).map(col => col.innerText.trim());
-            rows.push(rowData);
-          });
-          return rows;
-        });
-
-        // Add the scraped data to the new worksheet
-        nextPageData.forEach(row => {
-          newSheet.addRow(row);
-        });
-
-        // Save the new Excel file for the current page
-        filePath = path.join(__dirname, `scraped-post-${pageNumber}.xlsx`);
-        await newWorkbook.xlsx.writeFile(filePath);
-        console.log(`File for page ${pageNumber} saved at ${filePath}`);
-
+    res.download(filePath, filename, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+        res.status(500).send('Failed to download the file');
       } else {
-        nextPageExists = false;
-        console.log('Next button not found.');
-        await page.screenshot({ path: 'next-button-not-found.png' });
+        // Cleanup: Delete the file after sending
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Error deleting file:', err);
+        });
       }
-    }
-
-    // After scraping all pages, close the browser
-    await page.close();
-    await browser.close();
-
-    // Send the last created Excel file as the download (for the last scraped page)
-    if (fs.existsSync(filePath)) {
-      res.download(filePath, `scraped-post-${pageNumber}.xlsx`, (err) => {
-        if (err) {
-          console.log('Error downloading the file:', err);
-        }
-        // Clean up after sending the file
-        fs.unlinkSync(filePath); // Delete the file after sending it to the user
-      });
-    } else {
-      res.status(500).send('The generated Excel file could not be found.');
-    }
-
+    });
   } catch (error) {
-    console.error('Error during scraping:', error);
-    // Ensure `page` is available for screenshots in case of an error
-    if (page) {
-      await page.screenshot({ path: 'scraping-error.png' });
-    }
-    res.status(500).send('An error occurred while scraping the page. Screenshot saved.');
-  } finally {
-    if (browser) {
-      await browser.close(); // Ensure browser is closed in the finally block
-    }
+    console.error('Error scraping the URL:', error);
+    res.status(500).send('Failed to scrape tables from the URL');
   }
 });
 
-app.listen(3002)
 
+  
+  
+  async function scrapeTables2(page) {
+    try {
+      // Wait for the table(s) to appear on the page
+      await page.waitForSelector('table');  // Ensure tables are loaded on the page
+      let tablesData = [];
+      // Use page.$$eval() to get all the tables on the page
+      const tableData = await page.$$eval('table', tables => {
+        // For each table, extract rows and cells
+        return tables.map(table => {
+          const rows = Array.from(table.querySelectorAll('tr'));  // Get all rows in the table
+          return rows.map(row => {
+            const cells = Array.from(row.querySelectorAll('th, td'));  // Get all cells in the row (th or td)
+            return cells.map(cell => cell.textContent.trim());  // Get the text content of each cell
+          });
+        });
+      });
+  
+      // Return the structured table data
+      return tableData;
+  
+    } catch (error) {
+      console.error('Error scraping tables:', error);
+      throw new Error('Failed to scrape tables');
+    }
+  }
+  
+  app.post('/scrape2', async (req, res) => {
+    const { url, btn, nbtn } = req.body;
+  
+    if (!url) {
+      return res.status(400).send('URL is required');
+    }
+  
+    try {
+      console.log('Start scraping');
+  
+      // Launch Puppeteer browser
+      const browser = await puppeteer.launch({
+        // headless: false, slowMo: 100, // Uncomment to visualize test
+      });
+      const page = await browser.newPage();
+    
+      await page.goto(url);
+    
+      // Resize window to 1280 x 585
+      await page.setViewport({ width: 5120, height: 2341 });
+    
+      // Click on <button> "View results as a table"
+      await page.waitForSelector(btn);
+      await page.click(btn);
+      let tablesData = [];
+      
+      let hasNextPage = true;
+      // Scrape and paginate (click "Next" until no more pages)
+      while (hasNextPage) {
+        // Scrape the tables on the current page
+        tablesData = tablesData.concat(await scrapeTables2(page));
+  
+        // Check if the "Next" button exists and click it
+        try {
+          const nextButton = await page.$(nbtn);
+          
+          if (nextButton) {
+            await nextButton.click();
+            console.log('Next button clicked');
+  
+            // Wait for the page to load again  // Wait for the page to update (you can adjust the timeout)
+          } else {
+            console.log('No more pages or "Next" button not found');
+            hasNextPage = false;  // If "Next" button isn't found, exit the loop
+          }
+        } catch (error) {
+          console.log('Error clicking "Next" button:', error);
+          hasNextPage = false;
+        }
+      }
+  
+      // Process the tablesData and save to Excel
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Scraped Tables');
+      let rowIndex = 1;
+  
+      tablesData.forEach(tableData => {
+        tableData.forEach(rowData => {
+          worksheet.addRow(rowData);
+        });
+        rowIndex += tableData.length + 1;
+        worksheet.addRow([]); // Add empty row between tables
+      });
+  
+      const timestamp = Date.now();
+      const filename = `tables_${timestamp}.xlsx`;
+      const filePath = path.join(__dirname, 'downloads', filename);
+      await workbook.xlsx.writeFile(filePath);
+  
+      // Send the file to the client
+      res.download(filePath, filename, (err) => {
+        if (err) {
+          console.error('Error sending file:', err);
+          res.status(500).send('Failed to download the file');
+        } else {
+          // Cleanup: Delete the file after sending
+          fs.unlink(filePath, (err) => {
+            if (err) console.error('Error deleting file:', err);
+          });
+        }
+      });
+  
+      // Close the browser session
+      await browser.close();
+    } catch (error) {
+      console.error('Error scraping the URL:', error);
+      res.status(500).send('Failed to scrape tables from the URL');
+    }
+  });
 
+  app.post('/scrape3', async (req, res) => {
+    const { url, nbtn } = req.body;
+  
+    if (!url) {
+      return res.status(400).send('URL is required');
+    }
+  
+    try {
+      console.log('Start scraping');
+      // Launch Puppeteer browser
+      const browser = await puppeteer.launch({
+        // headless: false, slowMo: 100, // Uncomment to visualize test
+      });
+      const page = await browser.newPage();
+      await page.goto(url);
+      // Resize window to 1280 x 585
+      await page.setViewport({ width: 5120, height: 2341 });
+      // Click on <button> "View results as a table"
+      let tablesData = [];
+      let hasNextPage = true;
+      // Scrape and paginate (click "Next" until no more pages)
+      while (hasNextPage) {
+        // Scrape the tables on the current page
+        tablesData = tablesData.concat(await scrapeTables2(page));
+  
+        // Check if the "Next" button exists and click it
+        try {
+          const nextButton = await page.$(nbtn);
+          
+          if (nextButton) {
+            await nextButton.click();
+            console.log('Next button clicked');
+  
+            // Wait for the page to load again  // Wait for the page to update (you can adjust the timeout)
+          } else {
+            console.log('No more pages or "Next" button not found');
+            hasNextPage = false;  // If "Next" button isn't found, exit the loop
+          }
+        } catch (error) {
+          console.log('Error clicking "Next" button:', error);
+          hasNextPage = false;
+        }
+      }
+  
+      // Process the tablesData and save to Excel
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Scraped Tables');
+      let rowIndex = 1;
+  
+      tablesData.forEach(tableData => {
+        tableData.forEach(rowData => {
+          worksheet.addRow(rowData);
+        });
+        rowIndex += tableData.length + 1;
+        worksheet.addRow([]); // Add empty row between tables
+      });
+  
+      const timestamp = Date.now();
+      const filename = `tables_${timestamp}.xlsx`;
+      const filePath = path.join(__dirname, 'downloads', filename);
+      await workbook.xlsx.writeFile(filePath);
+  
+      // Send the file to the client
+      res.download(filePath, filename, (err) => {
+        if (err) {
+          console.error('Error sending file:', err);
+          res.status(500).send('Failed to download the file');
+        } else {
+          // Cleanup: Delete the file after sending
+          fs.unlink(filePath, (err) => {
+            if (err) console.error('Error deleting file:', err);
+          });
+        }
+      });
+  
+      // Close the browser session
+      await browser.close();
+    } catch (error) {
+      console.error('Error scraping the URL:', error);
+      res.status(500).send('Failed to scrape tables from the URL');
+    }
+  });
 
-
+// Start the server
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
