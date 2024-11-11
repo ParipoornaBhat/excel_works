@@ -83,7 +83,7 @@ app.post('/scrape', async (req, res) => {
     const timestamp = Date.now();
     const filename = `tables_${timestamp}.xlsx`;
 
-    const filePath = path.join(__dirname, 'downloads', filename);
+    const filePath = path.join(__dirname, './', filename);
     await workbook.xlsx.writeFile(filePath);
 
     res.download(filePath, filename, (err) => {
@@ -198,7 +198,7 @@ app.post('/scrape', async (req, res) => {
   
       const timestamp = Date.now();
       const filename = `tables_${timestamp}.xlsx`;
-      const filePath = path.join(__dirname, 'downloads', filename);
+      const filePath = path.join(__dirname, './', filename);
       await workbook.xlsx.writeFile(filePath);
   
       // Send the file to the client
@@ -281,7 +281,7 @@ app.post('/scrape', async (req, res) => {
   
       const timestamp = Date.now();
       const filename = `tables_${timestamp}.xlsx`;
-      const filePath = path.join(__dirname, 'downloads', filename);
+      const filePath = path.join(__dirname, './', filename);
       await workbook.xlsx.writeFile(filePath);
   
       // Send the file to the client
