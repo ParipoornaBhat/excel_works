@@ -134,7 +134,7 @@ app.post('/scrape', async (req, res) => {
     }
   }
   
-  app.post('/scrape2', async (req, res) => {
+  app.post('/scrapes', async (req, res) => {
     const { url, btn, nbtn } = req.body;
   
     if (!url) {
@@ -224,7 +224,7 @@ app.post('/scrape', async (req, res) => {
     }
   });
 
-  app.post('/scrape3', async (req, res) => {
+  app.post('/scrapess', async (req, res) => {
     const { url, nbtn } = req.body;
   
     if (!url) {
