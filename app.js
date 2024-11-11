@@ -146,6 +146,3 @@ app.listen(3002)
 
 
 
-
-#pagination-label-3072 > ul > li.pr-pagination__item.pr-pagination__item__next > a
-#contentStart > div > div > arcuscommunity-pr_search > div > section:nth-child(6) > div > div > c-pr_result > div > div.slds-media.slds-media_center > div:nth-child(2) > button
