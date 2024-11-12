@@ -7,7 +7,9 @@ const fs = require('fs');
 
 const app = express();
 
+
 const puppeteer = require('puppeteer-core');
+const chrome = require('chrome-aws-lambda');
 const cors = require('cors');
 app.use(cors()); // This will allow all origins
 require("dotenv").config();
@@ -321,8 +323,8 @@ app.post('/scrape', async (req, res) => {
   
       // Launch Puppeteer browser
       const browser = await puppeteer.launch({
-        executablePath: chromiumPath,
-        headless: true, // Run in headless mode
+        executablePath: await chrome.executablePath,  // Use the executable path from chrome-aws-lambda
+        headless: true,  // Run in headless mode
         args: [
           '--no-sandbox',    // Avoid sandboxing issues
           '--disable-setuid-sandbox',
