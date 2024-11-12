@@ -320,7 +320,7 @@ app.post('/scrape', async (req, res) => {
   
     try {
       console.log('Start scraping');
-  
+      console.log("Chromium executable path:", await chromium.executablePath);
       // Launch Puppeteer browser
       const browser = await puppeteer.launch({
         executablePath: await chromium.executablePath,  // Dynamically fetch the path to Chromium
