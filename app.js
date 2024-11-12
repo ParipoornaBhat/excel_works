@@ -4,13 +4,14 @@ const { JSDOM } = require('jsdom');
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
+
 const app = express();
 
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 app.use(cors()); // This will allow all origins
 require("dotenv").config();
-
+const chromiumPath = process.env.CHROME_BIN2 || '/usr/bin/google-chrome'; 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -320,15 +321,20 @@ app.post('/scrape', async (req, res) => {
   
       // Launch Puppeteer browser
       const browser = await puppeteer.launch({
-executablePath:process.env.NODE_ENV==="production" ? process.env.PUPPETEER_EXECUTABLE_PATH:puppeteer.executablePath(),
-        args:[
-          "--disable-setuid-sandbox",
-          "--no-sandbox",
-          "--single-process",
-          "--no-zogote",
+        executablePath: chromiumPath,
+        headless: true, // Run in headless mode
+        args: [
+          '--no-sandbox',    // Avoid sandboxing issues
+          '--disable-setuid-sandbox',
+          '--disable-gpu',   // Ensure GPU acceleration is off (important in serverless)
+          '--disable-dev-shm-usage',
+          '--remote-debugging-port=9222',
+          '--single-process', // Better in serverless environments
         ],
-        // headless: false, slowMo: 100, // Uncomment to visualize test
+         // headless: false, slowMo: 100, // Uncomment to visualize test
       });
+       
+     
       const page = await browser.newPage();
     
       await page.goto(url);

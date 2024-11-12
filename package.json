@@ -19,6 +19,7 @@
     "fs": "^0.0.1-security",
     "jsdom": "^25.0.1",
     "path": "^0.12.7",
-    "puppeteer": "^23.7.1"
+    "puppeteer": "^23.7.1",
+    "puppeteer-core": "^23.7.1"
   }
 }
