@@ -321,11 +321,11 @@ app.post('/scrape', async (req, res) => {
   
     try {
       console.log('Start scraping');
-      const browser = await puppeteer.launch( {args: [
-         "--disable-setuid-sandbox",
-         "--no-sandbox", "--single-process", "-no-zygote",],
-           executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-        // Default viewport settings
+      const browser = await puppeteer.launch({
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',  // Ensure correct path
+        headless: true,  // Always run in headless mode on server
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],  // Important for headless mode in cloud environments
+      // Default viewport settings
          // headless: false, slowMo: 100, // Uncomment to visualize test
       });
        
