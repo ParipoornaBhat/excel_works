@@ -8,7 +8,7 @@ const fs = require('fs');
 const app = express();
 
 
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 const chromium = require('chrome-aws-lambda');  // Ensure that this import is correct
 
 const cors = require('cors');
@@ -321,13 +321,11 @@ app.post('/scrape', async (req, res) => {
   
     try {
       console.log('Start scraping');
-      console.log("Chromium executable path:", await chromium.executablePath);
-      // Launch Puppeteer browser
       const browser = await puppeteer.launch({
-        executablePath: await chromium.executablePath,  // Dynamically fetch the path to Chromium
-        headless: chromium.headless,  // Run in headless mode
-        args: chromium.args,  // Arguments optimized for serverless environments
-        defaultViewport: chromium.defaultViewport,  // Default viewport settings
+        headless: true,  // Run in headless mode
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        defaultViewport: { width: 1280, height: 800 },
+        // Default viewport settings
          // headless: false, slowMo: 100, // Uncomment to visualize test
       });
        
