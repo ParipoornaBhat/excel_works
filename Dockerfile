@@ -6,6 +6,8 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true\
 WORKDIR /usr/src/app
 
 COPY package*.json ./
+RUN chmod -R 755 /usr/src/app && chown -R node:node /usr/src/app
+
 
 RUN npm install
 
