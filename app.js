@@ -323,16 +323,10 @@ app.post('/scrape', async (req, res) => {
   
       // Launch Puppeteer browser
       const browser = await puppeteer.launch({
-        executablePath: await chrome.executablePath,  // Use the executable path from chrome-aws-lambda
-        headless: true,  // Run in headless mode
-        args: [
-          '--no-sandbox',    // Avoid sandboxing issues
-          '--disable-setuid-sandbox',
-          '--disable-gpu',   // Ensure GPU acceleration is off (important in serverless)
-          '--disable-dev-shm-usage',
-          '--remote-debugging-port=9222',
-          '--single-process', // Better in serverless environments
-        ],
+        executablePath: await chromium.executablePath,  // Dynamically fetch the path to Chromium
+        headless: chromium.headless,  // Run in headless mode
+        args: chromium.args,  // Arguments optimized for serverless environments
+        defaultViewport: chromium.defaultViewport,  // Default viewport settings
          // headless: false, slowMo: 100, // Uncomment to visualize test
       });
        
