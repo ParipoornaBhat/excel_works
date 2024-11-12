@@ -9,7 +9,8 @@ const app = express();
 
 
 const puppeteer = require('puppeteer-core');
-const chrome = require('chrome-aws-lambda');
+const chromium = require('chrome-aws-lambda');  // Ensure that this import is correct
+
 const cors = require('cors');
 app.use(cors()); // This will allow all origins
 require("dotenv").config();
