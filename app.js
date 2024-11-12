@@ -7,7 +7,7 @@ const fs = require('fs');
 
 const app = express();
 
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 const cors = require('cors');
 app.use(cors()); // This will allow all origins
 require("dotenv").config();
