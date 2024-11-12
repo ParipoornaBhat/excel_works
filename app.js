@@ -321,11 +321,7 @@ app.post('/scrape', async (req, res) => {
   
     try {
       console.log('Start scraping');
-      const browser = await puppeteer. launch( {args: [
-         "--disable-setuid-sandbox",
-         "--no-sandbox", "--single-process", "-no-zygote",],
-         executablePath:process.env.NODE_ENV=== "production" ? process.env.PUPPETEER_EXECUTABLE_PATH:puppeteer.executablePath(),
-        // Default viewport settings
+      const browser = await puppeteer.launch( {
          // headless: false, slowMo: 100, // Uncomment to visualize test
       });
        
