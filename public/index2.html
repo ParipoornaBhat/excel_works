@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrape Tables to Excel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .form-container {
+      display: none;
+      margin-top: 30px;
+    }
+    .form-container.active {
+      display: block;
+    }
+    h1 {
+      text-align: center;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    p {
+      text-align: center;
+    }
+    a {
+      text-decoration: none;
+      color: #1E90FF;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Single Page URL Form (Initially visible) -->
+  <div class="form-container active" id="single-page-form">
+    <form id="single-page-form-action">
+      <h1>Scrape Tables to Excel (SINGLE PAGE, ONLY URL)</h1>
+      <input type="url" id="url" placeholder="Enter URL of the page with tables" required>
+      <button type="button" onclick="scrapeTables()">Scrape and Download Excel</button>
+      <p><a href="#" onclick="toggleForms(event, 'multi-with-init')">Multi-Page (With Initialise Button)</a></p>
+      <p><a href="#" onclick="toggleForms(event, 'multi-with-next')">Multi-Page (With Only Next Button)</a></p>
+    </form>
+  </div>
+
+  <!-- Multi-Page with Initialise Button Form -->
+  <div class="form-container" id="multi-with-init-form">
+    <form id="multi-with-init-form-action">
+      <h1>Scrape Tables to Excel (MULTI PAGE, WITH INITIALISE BUTTON)</h1>
+      <input type="url" id="url2" placeholder="Enter URL of the page with tables" required>
+      <label for="btn">Initial Button:</label>
+      <input type="text" id="btn" placeholder="Enter Button Selector" required>
+      <label for="nbtn">Next Button:</label>
+      <input type="text" id="nbtn" placeholder="Enter Next Button Selector" required>
+      <button type="button" onclick="scrapeTables2()">Scrape and Download Excel</button>
+      <p><a href="#" onclick="toggleForms(event, 'single-page')">Single Page (Only URL)</a></p>
+      <p><a href="#" onclick="toggleForms(event, 'multi-with-next')">Multi-Page (With Only Next Button)</a></p>
+    </form>
+  </div>
+
+  <!-- Multi-Page with Only Next Button Form -->
+  <div class="form-container" id="multi-with-next-form">
+    <form id="multi-with-next-form-action">
+      <h1>Scrape Tables to Excel (MULTI PAGE, WITH ONLY NEXT BUTTON)</h1>
+      <input type="url" id="url3" placeholder="Enter URL of the page with tables" required>
+      <label for="nbtn">Next Button:</label>
+      <input type="text" id="nbtn3" placeholder="Enter Next Button Selector" required>
+      <button type="button" onclick="scrapeTables3()">Scrape and Download Excel</button>
+      <p><a href="#" onclick="toggleForms(event, 'single-page')">Single Page (Only URL)</a></p>
+      <p><a href="#" onclick="toggleForms(event, 'multi-with-init')">Multi-Page (With Initialise Button)</a></p>
+    </form>
+  </div>
+
+  <script>
+    // Toggle between the forms
+    function toggleForms(event, form) {
+      event.preventDefault();
+      const forms = ['single-page', 'multi-with-init', 'multi-with-next'];
+      forms.forEach(f => {
+        const element = document.getElementById(`${f}-form`);
+        element.classList.remove('active');
+      });
+      document.getElementById(`${form}-form`).classList.add('active');
+    }
+
+    // For Single Page
+    async function scrapeTables() {
+      const url = document.getElementById('url').value;
+
+      if (!url) {
+        alert('Please enter a URL.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'scraped_tables.xlsx';
+          link.click();
+        } else {
+          alert('Failed to scrape tables. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error scraping:', error);
+        alert('An error occurred while scraping. Please try again.');
+      }
+    }
+
+    // For Multi-Page with Initialise Button
+    async function scrapeTables2() {
+      const url = document.getElementById('url2').value;
+      const btn = document.getElementById('btn').value;
+      const nbtn = document.getElementById('nbtn').value;
+
+      if (!url || !btn || !nbtn) {
+        alert('Please enter a URL and button selectors.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url, initBtn: btn, nextBtn: nbtn })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'scraped_tables.xlsx';
+          link.click();
+        } else {
+          alert('Failed to scrape tables. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error scraping:', error);
+        alert('An error occurred while scraping. Please try again.');
+      }
+    }
+
+    // For Multi-Page with Only Next Button
+    async function scrapeTables3() {
+      const url = document.getElementById('url3').value;
+      const nbtn = document.getElementById('nbtn3').value;
+
+      if (!url || !nbtn) {
+        alert('Please enter a URL and next button selector.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url, nextBtn: nbtn })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = 'scraped_tables.xlsx';
+          link.click();
+        } else {
+          alert('Failed to scrape tables. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error scraping:', error);
+        alert('An error occurred while scraping. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>

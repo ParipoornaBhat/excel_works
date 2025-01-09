@@ -3,283 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Table Scraper</title>
+  <title>Web Scraper</title>
   <style>
-    /* Basic Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-
-    body {
-      background-color: #f4f7fc;
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
-      flex-direction: column;
-      padding: 20px;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 480px;
-      background-color: #fff;
-      margin: 15vh 10vh 5vh 10vh;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 20px;
-      color: #333;
-      text-align: center;
-    }
-
-    .form-container {
-      display: none;
-    }
-
-    .form-container.active {
-      display: block;
-    }
-
-    input[type="url"], input[type="text"] {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input[type="url"]:focus, input[type="text"]:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.2);
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #007bff;
-      border: none;
-      color: white;
-      font-size: 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    a {
-      display: inline-block;
-      margin-top: 10px;
-      text-align: center;
-      text-decoration: none;
-      color: #007bff;
-      font-size: 14px;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-
-    p {
-      text-align: center;
-      font-size: 14px;
-      color: #555;
-      margin-top: 20px;
-    }
-
-    /* Responsive Styles */
-    @media (max-width: 480px) {
-      .container {
-        padding: 15px;
-        max-width: 90%;
-      }
-
-      h1 {
-        font-size: 20px;
-      }
-
-      button {
-        font-size: 14px;
-      }
-
-      a {
-        font-size: 12px;
-      }
-
-      p {
-        font-size: 12px;
-      }
-    }
+    body { font-family: Arial, sans-serif; }
+    .form-container { max-width: 500px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; }
+    label { display: block; margin-bottom: 10px; }
+    input, button { width: 100%; padding: 10px; margin-bottom: 10px; }
+    button { background-color: #4CAF50; color: white; border: none; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Single Page URL Form (Initially visible) -->
-    <div class="form-container active" id="single-page-form">
-      <form id="single-page-form-action">
-        <h1>Scrape Tables to Excel (SINGLE PAGE, ONLY URL)</h1>
-        <input type="url" id="url" placeholder="Enter URL of the page with tables" required>
-        <button type="button" onclick="scrapeTables()">Scrape and Download Excel</button>
-        <p><a href="#" onclick="toggleForms(event, 'multi-with-init')">Multi-Page (With Initialise Button)</a></p>
-        <p><a href="#" onclick="toggleForms(event, 'multi-with-next')">Multi-Page (With Only Next Button)</a></p>
-      </form>
-    </div>
-
-    <!-- Multi-Page with Initialise Button Form -->
-    <div class="form-container" id="multi-with-init-form">
-      <form id="multi-with-init-form-action">
-        <h1>Scrape Tables to Excel (MULTI PAGE, WITH INITIALISE BUTTON)</h1>
-        <input type="url" id="url2" placeholder="Enter URL of the page with tables" required>
-        <label for="btn">Initial Button:</label>
-        <input type="text" id="btn" placeholder="Enter Button Selector" required>
-        <label for="nbtn">Next Button:</label>
-        <input type="text" id="nbtn" placeholder="Enter Next Button Selector" required>
-        <button type="button" onclick="scrapeTables2()">Scrape and Download Excel</button>
-        <p><a href="#" onclick="toggleForms(event, 'single-page')">Single Page (Only URL)</a></p>
-        <p><a href="#" onclick="toggleForms(event, 'multi-with-next')">Multi-Page (With Only Next Button)</a></p>
-      </form>
-    </div>
-
-    <!-- Multi-Page with Only Next Button Form -->
-    <div class="form-container" id="multi-with-next-form">
-      <form id="multi-with-next-form-action">
-        <h1>Scrape Tables to Excel (MULTI PAGE, WITH ONLY NEXT BUTTON)</h1>
-        <input type="url" id="url3" placeholder="Enter URL of the page with tables" required>
-        <label for="nbtn">Next Button:</label>
-        <input type="text" id="nbtn3" placeholder="Enter Next Button Selector" required>
-        <button type="button" onclick="scrapeTables3()">Scrape and Download Excel</button>
-        <p><a href="#" onclick="toggleForms(event, 'single-page')">Single Page (Only URL)</a></p>
-        <p><a href="#" onclick="toggleForms(event, 'multi-with-init')">Multi-Page (With Initialise Button)</a></p>
-      </form>
-    </div>
+  <div class="form-container">
+    <h1>Tabel Scraper</h1>
+    <form id="scrapeForm">
+      <label for="url">URL</label>
+      <input type="url" id="url" name="url" placeholder="Enter the URL" required />
+      <label for="initialiseBtn">Initialise Button Selector (Optional)</label>
+      <input type="text" id="initialiseBtn" name="initialiseBtnSelector" placeholder="Enter the selector for the Initialise button" />
+      <label for="nextBtn">Next Page Button Selector (Optional)</label>
+      <input type="text" id="nextBtn" name="nextBtnSelector" placeholder="Enter the selector for the Next button" />
+      <button type="submit">Start Scraping</button>
+    </form>
+    <div id="errorMessage" style="color: red; display: none;"></div>
   </div>
-
-  <p><a href="https://chromewebstore.google.com/detail/deploysentinel-recorder/geggbdbnidkhbnbjoganapfhkpgkndfo" target="_blank">Download the Chrome Extension to get button's Selector</a></p>
-
   <script>
-    function toggleForms(event, form) {
-      event.preventDefault();
-      const forms = ['single-page', 'multi-with-init', 'multi-with-next'];
-      forms.forEach(f => {
-        const element = document.getElementById(`${f}-form`);
-        element.classList.remove('active');
-      });
-
-      document.getElementById(`${form}-form`).classList.add('active');
-    }
-
-    async function scrapeTables() {
+    document.getElementById('scrapeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
       const url = document.getElementById('url').value;
-
-      if (!url) {
-        alert('Please enter a URL.');
-        return;
+      const initialiseBtn = document.getElementById('initialiseBtn').value;
+      const nextBtn = document.getElementById('nextBtn').value;
+      const response = await fetch('/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, initialiseBtnSelector: initialiseBtn, nextBtnSelector: nextBtn }),
+      });
+      if (response.ok) {
+        window.location.href = '/scraped-data.xlsx';
+      } else {
+        const errorText = await response.text();
+        document.getElementById('errorMessage').innerText = errorText;
+        document.getElementById('errorMessage').style.display = 'block';
       }
-
-      try {
-        const response = await fetch('/scrape', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url }),
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'scraped_tables.xlsx';
-          link.click();
-        } else {
-          alert('Failed to scrape tables. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error scraping:', error);
-        alert('An error occurred while scraping. Please try again.');
-      }
-    }
-
-    async function scrapeTables2() {
-      const url = document.getElementById('url2').value;
-      const btn = document.getElementById('btn').value;
-      const nbtn = document.getElementById('nbtn').value;
-
-      if (!url || !btn || !nbtn) {
-        alert('Please enter a URL and button selectors.');
-        return;
-      }
-
-      try {
-        const response = await fetch('/scrape', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url, btn, nbtn }),
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'scraped_tables.xlsx';
-          link.click();
-        } else {
-          alert('Failed to scrape tables. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error scraping:', error);
-        alert('An error occurred while scraping. Please try again.');
-      }
-    }
-
-    async function scrapeTables3() {
-      const url = document.getElementById('url3').value;
-      const nbtn = document.getElementById('nbtn3').value;
-
-      if (!url || !nbtn) {
-        alert('Please enter a URL and next button selector.');
-        return;
-      }
-
-      try {
-        const response = await fetch('/scrape', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ url, nbtn }),
-        });
-
-        if (response.ok) {
-          const blob = await response.blob();
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.download = 'scraped_tables.xlsx';
-          link.click();
-        } else {
-          alert('Failed to scrape tables. Please try again.');
-        }
-      } catch (error) {
-        console.error('Error scraping:', error);
-        alert('An error occurred while scraping. Please try again.');
-      }
-    }
+    });
   </script>
 </body>
 </html>
