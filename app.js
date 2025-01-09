@@ -1,11 +1,10 @@
 const express = require('express');
-const axios = require('axios');
 const ExcelJS = require('exceljs');
+const puppeteer = require('puppeteer');
+require('dotenv').config(); // Load environment variables from .env file
+const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-const puppeteer = require('puppeteer');
-require('dotenv').config();
-const cors = require('cors');
 
 const app = express();
 
@@ -18,7 +17,7 @@ async function scrapeTables(url, btn, nbtn) {
   try {
     // Launch Puppeteer browser
     const browser = await puppeteer.launch({
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Ensure the path is correct for your environment
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium', // Use .env variable or fallback
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
